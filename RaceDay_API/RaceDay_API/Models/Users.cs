@@ -12,11 +12,12 @@ namespace RaceDay_API.Models
         public double Weight { get; set; }
         public double Height { get; set; }
         public string Username { get; set; }    
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
     }
 
     public class ParticipantsLogin
     {
+        public int Id { get; set; }
         public string Name { get; set; }
         public string Surname { get; set; }
         public int Age { get; set; }
@@ -24,7 +25,7 @@ namespace RaceDay_API.Models
         public int Height { get; set; }
         public int Weight { get; set; }
         public string Username { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
     }
 
     public class ParticipantsResponse
@@ -37,18 +38,18 @@ namespace RaceDay_API.Models
         public double Weight { get; set; }
         public double Height { get; set; }
         public string Username { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
     }
 
     public class ParticipantsLoginRequest
     {
         public string Username { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
     }
     
     public class ParticipantsLoginResponse
     {
-        public string UserId { get; set; }
+        public int ParticipantsId { get; set; }
         public string Username { get; set; }
         public string Message { get; set; }
     }
@@ -62,7 +63,7 @@ namespace RaceDay_API.Models
         public double Weight { get; set; }
         public double Height { get; set; }
         public string Username { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
     }
 
     public class ParticipantsUpdateResponse
@@ -75,7 +76,7 @@ namespace RaceDay_API.Models
         public int Id { get; set; }
         public string Label { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
         public string Description { get; set; }
     }
     public class OrganizerRequest
@@ -83,7 +84,7 @@ namespace RaceDay_API.Models
         public int Id { get; set; }
         public string Label { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
     }
 
     public class OrganizerResponse
@@ -91,14 +92,14 @@ namespace RaceDay_API.Models
         public int Id { get; set; }
         public string Label { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
         public string Description { get; set; }
     }
 
     public class OrganizerLoginRequest
     {
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
     }
     public class OrganizerLoginResponse
     {
@@ -111,7 +112,7 @@ namespace RaceDay_API.Models
     {
         public string Label { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
+        public string PasswordHash { get; set; }
         public string Description { get; set; }
     }
 
@@ -160,7 +161,7 @@ namespace RaceDay_API.Models
         public int EventId { get; set; }
         public int ParticipantId { get; set; }
         public TimeSpan Time { get; set; }
-        public int Postion { get; set; }
+        public int Position { get; set; }
         public double Distance { get; set; }
         public string Category { get; set; }
 
