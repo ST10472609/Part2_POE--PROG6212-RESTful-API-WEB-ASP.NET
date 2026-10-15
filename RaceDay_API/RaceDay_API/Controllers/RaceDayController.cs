@@ -167,6 +167,26 @@ namespace RaceDay_API.Controllers
             return NoContent();
         }
         
+        //login for participants
+        [HttpPost("participants/login")]
+        public async Task<ActionResult<Participants>> LoginParticipant([FromBody] DtoParticipantsLogin loginRequest)
+        {
+            var participant = await _context.Participants
+                .FirstOrDefaultAsync(p => p.Email == loginRequest.Email && p.PasswordHash == loginRequest.PasswordHash);
+            if (participant == null)
+            {
+                return Unauthorized("Invalid email or password.");
+            }
+
+            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.PasswordHash, participant.PasswordHash);
+
+            if (!isPasswordValid)
+            {
+                return Unauthorized("Invalid email or password.");
+            }
+            return Ok(participant);
+        }
+
         // GET: api/RaceDay/Organizers
         [HttpGet("Organizers")]
         public async Task<ActionResult<IEnumerable<Organizer>>> GetOrganizers()

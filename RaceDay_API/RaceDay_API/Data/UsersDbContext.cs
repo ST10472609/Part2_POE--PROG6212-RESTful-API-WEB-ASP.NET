@@ -10,7 +10,7 @@ namespace RaceDay_API.Data
         }
         public DbSet<Participants> Participants { get; set; }
 
-        public DbSet<ParticipantsLogin> ParticipantsLogin { get; set; }
+        public DbSet<DtoParticipantsLogin> ParticipantsLogin { get; set; }
 
         public DbSet<Organizer> Organizers { get; set; }
 

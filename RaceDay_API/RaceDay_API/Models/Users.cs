@@ -15,7 +15,7 @@ namespace RaceDay_API.Models
         public string PasswordHash { get; set; }
     }
 
-    public class ParticipantsLogin
+    public class DtoParticipantsLogin
     {
         public int Id { get; set; }
         public string Name { get; set; }
