@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay_API.Data;
@@ -80,7 +81,7 @@ namespace RaceDay_API.Controllers
                 ParticipantId = 1,
                 Time = new TimeSpan(0, 45, 30),
                 Distance = 10.0,
-                CategoryId = 1
+                CategoryId = "1"
             },
             new ResultsResponse
             {
@@ -89,7 +90,7 @@ namespace RaceDay_API.Controllers
                 ParticipantId = 2,
                 Time = new TimeSpan(0, 50, 15),
                 Distance = 10.0,
-                CategoryId = 1
+                CategoryId = "1"
             }
         };
 
@@ -97,13 +98,13 @@ namespace RaceDay_API.Controllers
         {
             new category
             {
-                Id = 1,
+                Id = "1",
                 Name = "Open",
                 Description = "Open category for all participants."
             },
             new category
             {
-                Id = 2,
+                Id = "2",
                 Name = "Veteran",
                 Description = "Category for participants aged 40 and above."
             }
@@ -119,7 +120,7 @@ namespace RaceDay_API.Controllers
                 Date = new DateTime(2024, 6, 15),
                 Location = "Dodge City, Cape Town",
                 Distance = 10.0,
-                CategoryId = 1,
+                CategoryId = "1",
                 Age = 18 - 50,
                 Email = "CyberRazor.raz.co.za",
             }
@@ -134,7 +135,7 @@ namespace RaceDay_API.Controllers
                 Time = new TimeSpan(0, 45, 30),
                 Position = 1,
                 Distance = 10.0,
-                CategoryId = 1
+                CategoryId = "1"
             }
         };
 
@@ -609,7 +610,22 @@ namespace RaceDay_API.Controllers
         [HttpGet("EventEnrollments/{id}")]
         public async Task<ActionResult<EventEnrollments>> GetEventEnrollment(int id)
         {
-            var eventEnrollment = await _context.EventEnrollments.FindAsync(id);
+            if (role
+                != "organizer") 
+            { 
+                return Unauthorized("Only organizers can access event enrollments.");
+            }
+            var eventEnrollment = await _context.EventEnrollments.FindAsync(id)
+                .Where (e => e.OrganizerId == organizerId)
+                .Select(e => new EventEnrollments
+                {
+                    Id = e.Id,
+                    EventId = e.EventId,
+                    ParticipantId = e.ParticipantId,
+                    Age = e.Age,
+                    OrganizerId = e.OrganizerId,
+                    CategoryId = e.CategoryId
+                }).ToListAsync();
             if (eventEnrollment == null)
             {
                 return NotFound();
@@ -621,6 +637,25 @@ namespace RaceDay_API.Controllers
         [HttpPost("EventEnrollments")]
         public async Task<ActionResult<EventEnrollments>> CreateEventEnrollment(EventEnrollments eventEnrollment)
         {
+            var participant = await _context.Participants.FindAsync(eventEnrollment.ParticipantId);
+            if (participant == null)
+            {
+                return NotFound("Participant not found.");
+            }
+
+            var raceEvent = await _context.Events.FindAsync(eventEnrollment.EventId);
+            if (raceEvent == null)
+            {
+                return NotFound("Event not found.");
+            }
+
+            var eventEnrollments = await _context.EventEnrollments
+                .FirstOrDefaultAsync(e => e.ParticipantId == eventEnrollment.ParticipantId && e.EventId == eventEnrollment.EventId);
+            if (eventEnrollments != null)
+            {
+                return Conflict("Participant is already enrolled in this event.");
+            }
+
             _context.EventEnrollments.Add(eventEnrollment);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetEventEnrollment), new { id = eventEnrollment.Id }, eventEnrollment);
