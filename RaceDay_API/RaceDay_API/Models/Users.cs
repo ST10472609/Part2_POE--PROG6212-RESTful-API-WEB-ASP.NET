@@ -13,6 +13,7 @@ namespace RaceDay_API.Models
         public double Height { get; set; }
         public string Username { get; set; }    
         public string PasswordHash { get; set; }
+        public string Role { get; set; } = "Participant";
     }
 
     public class DtoParticipantsLogin
@@ -78,6 +79,7 @@ namespace RaceDay_API.Models
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public string Description { get; set; }
+        public string Role { get; set; } = "Organizer";
     }
     public class OrganizerRequest
     {
@@ -96,7 +98,7 @@ namespace RaceDay_API.Models
         public string Description { get; set; }
     }
 
-    public class OrganizerLoginRequest
+    public class DtoOrganizerLogin
     {
         public string Email { get; set; }
         public string PasswordHash { get; set; }
@@ -126,7 +128,7 @@ namespace RaceDay_API.Models
         public int Id { get; set; }
         public int EventId { get; set; }
         public int ParticipantId { get; set; }
-
+        public string Message { get; set; }
     }
 
     public class  Event
