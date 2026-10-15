@@ -131,6 +131,13 @@ namespace RaceDay_API.Models
         public string Message { get; set; }
     }
 
+    public class category
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+    }   
+
     public class  Event
     {
         public int Id { get; set; }
@@ -140,7 +147,7 @@ namespace RaceDay_API.Models
         public string Location { get; set; }
         public string Email { get; set; }
         public double Distance { get; set; }
-        public string Categories { get; set; }
+        public string CategoryId { get; set; }
         public int Age { get; set; }
         public int OrganizerId { get; set; }
         public int ParticipantsId { get; set; }
@@ -153,7 +160,7 @@ namespace RaceDay_API.Models
         public int ParticipantId { get; set; }
         public int Age { get; set; }
         public int OrganizerId { get; set; }
-        public string Category { get; set; }
+        public string CategoryId { get; set; }
 
     }
 
@@ -165,7 +172,7 @@ namespace RaceDay_API.Models
         public TimeSpan Time { get; set; }
         public int Position { get; set; }
         public double Distance { get; set; }
-        public string Category { get; set; }
+        public string CategoryId { get; set; }
 
     }
     // i had to write results as 'resultss' because there was an error when i tried to write it as 'results' because it was a reserved keyword in c# so i had to add an extra 's' at the end of the word 'results' to make it work
@@ -176,7 +183,7 @@ namespace RaceDay_API.Models
         public int ParticipantId { get; set; }
         public TimeSpan Time { get; set; }
         public double Distance { get; set; }
-        public string Category { get; set; }
+        public string CategoryId { get; set; }
     }
 
 }

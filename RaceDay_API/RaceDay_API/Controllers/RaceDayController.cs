@@ -55,10 +55,62 @@ namespace RaceDay_API.Controllers
                 Description = "Description for Organizer 2"
             }
         };
-
-        private static List<Event> Events = new List<Event> 
+        private static List<EventEnrollments> EventEnrollments = new List<EventEnrollments>
         {
-            new Event 
+            new EventEnrollments
+            {
+                Id = 1,
+                EventId = 1,
+                ParticipantId = 1
+            },
+            new EventEnrollments
+            {
+                Id = 2,
+                EventId = 1,
+                ParticipantId = 2
+            }
+        };
+
+        private static List<ResultsResponse> ResultsResponses = new List<ResultsResponse>
+        {
+            new ResultsResponse
+            {
+                Id = 1,
+                EventId = 1,
+                ParticipantId = 1,
+                Time = new TimeSpan(0, 45, 30),
+                Distance = 10.0,
+                CategoryId = 1
+            },
+            new ResultsResponse
+            {
+                Id = 2,
+                EventId = 1,
+                ParticipantId = 2,
+                Time = new TimeSpan(0, 50, 15),
+                Distance = 10.0,
+                CategoryId = 1
+            }
+        };
+
+        private static List<category> Categories = new List<category>
+        {
+            new category
+            {
+                Id = 1,
+                Name = "Open",
+                Description = "Open category for all participants."
+            },
+            new category
+            {
+                Id = 2,
+                Name = "Veteran",
+                Description = "Category for participants aged 40 and above."
+            }
+        };
+        private static List<Event> Events = new List<Event>
+        {
+            new Event
             {
                 Id = 1,
                 Name = "Dodge",
@@ -67,14 +119,14 @@ namespace RaceDay_API.Controllers
                 Date = new DateTime(2024, 6, 15),
                 Location = "Dodge City, Cape Town",
                 Distance = 10.0,
-                Categories = "Open, Junior, Senior",
+                CategoryId = 1,
                 Age = 18 - 50,
                 Email = "CyberRazor.raz.co.za",
             }
         };
-        private static List<Resultss> Results = new List<Resultss> 
-        { 
-            new Resultss 
+        private static List<Resultss> Results = new List<Resultss>
+        {
+            new Resultss
             {
                 Id = 1,
                 EventId = 1,
@@ -82,7 +134,7 @@ namespace RaceDay_API.Controllers
                 Time = new TimeSpan(0, 45, 30),
                 Position = 1,
                 Distance = 10.0,
-                Category = "Open"   
+                CategoryId = 1
             }
         };
 
@@ -98,7 +150,7 @@ namespace RaceDay_API.Controllers
         {
             return await _context.Participants.ToListAsync();
         }
-        
+
         // GET: api/RaceDay/participants/5
         [HttpGet("participants/{id}")]
         public async Task<ActionResult<Participants>> GetParticipant(int id)
@@ -168,7 +220,7 @@ namespace RaceDay_API.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-        
+
         //login for participants
         [HttpPost("participants/login")]
         public async Task<ActionResult<Participants>> LoginParticipant([FromBody] DtoParticipantsLogin loginRequest)
@@ -194,7 +246,7 @@ namespace RaceDay_API.Controllers
         {
             return await _context.Organizers.ToListAsync();
         }
-        
+
         // GET: api/RaceDay/Organizers/5
         [HttpGet("Organizers/{id}")]
         public async Task<ActionResult<Organizer>> GetOrganizer(int id)
@@ -242,13 +294,13 @@ namespace RaceDay_API.Controllers
             }
             return NoContent();
         }
-        
+
         // Helper method to check if an organizer exists
         private bool OrganizerExists(int id)
         {
             return _context.Organizers.Any(e => e.Id == id);
         }
-        
+
         // DELETE: api/RaceDay/Organizers/5
         [HttpDelete("Organizers/{id}")]
         public async Task<IActionResult> DeleteOrganizer(int id)
@@ -301,7 +353,7 @@ namespace RaceDay_API.Controllers
         {
             return await _context.Events.ToListAsync();
         }
-        
+
         // GET: api/RaceDay/Events/5
         [HttpGet("Events/{id}")]
         public async Task<ActionResult<Event>> GetEvent(int id)
@@ -313,7 +365,7 @@ namespace RaceDay_API.Controllers
             }
             return @event;
         }
-        
+
         // POST: api/RaceDay/Events
         [HttpPost("Events")]
         public async Task<ActionResult<Event>> CreateEvent(Event @event)
@@ -322,7 +374,7 @@ namespace RaceDay_API.Controllers
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetEvent), new { id = @event.Id }, @event);
         }
-        
+
         // PUT: api/RaceDay/Events/5
         [HttpPut("Events/{id}")]
         public async Task<IActionResult> UpdateEvent(int id, Event @event)
@@ -349,11 +401,11 @@ namespace RaceDay_API.Controllers
             }
             return NoContent();
         }
-        
+
         // Helper method to check if an event exists
         private bool EventExists(int id)
         {
-            return _context.Events.Any(e => e.Id == id);    
+            return _context.Events.Any(e => e.Id == id);
         }
 
         // DELETE: api/RaceDay/Events/5
@@ -401,10 +453,10 @@ namespace RaceDay_API.Controllers
                 new Registration
                 {
                     Id = eventEnrollment.Id,
-                    Message = "Participant registered successfully.",   
+                    Message = "Participant registered successfully.",
                     EventId = eventId,
                     ParticipantId = registration.ParticipantId
-                    } 
+                }
                 );
         }
         [Authorize]
@@ -426,50 +478,170 @@ namespace RaceDay_API.Controllers
             return Ok(registeredParticipants);
         }
 
+        [Authorize]
+
+
         // GET: api/RaceDay/Results
         [HttpGet("Results")]
-        public async Task<ActionResult<IEnumerable<Resultss>>> GetResults()
+        public async Task<ActionResult<IEnumerable<ResultsResponse>>> GetResults()
         {
-            return await _context.Resultss.ToListAsync();
+            var results = await _context.Resultss
+                .Select(r => new ResultsResponse
+                {
+                    Id = r.Id,
+                    EventId = r.EventId,
+                    ParticipantId = r.ParticipantId,
+                    Time = r.Time,
+                    Distance = r.Distance,
+                    CategoryId = r.CategoryId
+                })
+                .ToListAsync();
+            return Ok(results);
         }
 
         // GET: api/RaceDay/Results/5
         [HttpGet("Results/{id}")]
-        public async Task<ActionResult<Resultss>> GetResult(int id)
+        public async Task<ActionResult<ResultsResponse>> GetResult(int id)
         {
             var result = await _context.Resultss.FindAsync(id);
             if (result == null)
             {
                 return NotFound();
             }
-            return result;
+            var resultResponse = new ResultsResponse
+            {
+                Id = result.Id,
+                EventId = result.EventId,
+                ParticipantId = result.ParticipantId,
+                Time = result.Time,
+                Distance = result.Distance,
+                CategoryId = result.CategoryId
+            };
+            return Ok(resultResponse);
+        }
+
+        //GET: api/RaceDay/Results/event/5
+        [HttpGet("Results/event/{eventId}")]
+        public async Task<ActionResult<IEnumerable<ResultsResponse>>> GetResultsByEvent(int eventId)
+        {
+            var results = await _context.Resultss
+                .Where(r => r.EventId == eventId)
+                .Select(r => new ResultsResponse
+                {
+                    Id = r.Id,
+                    EventId = r.EventId,
+                    ParticipantId = r.ParticipantId,
+                    Time = r.Time,
+                    Distance = r.Distance,
+                    CategoryId = r.CategoryId
+                })
+                .ToListAsync();
+            if (results == null || results.Count == 0)
+            {
+                return NotFound("No results found for the specified event.");
+            }
+            return Ok(results);
         }
 
         // POST: api/RaceDay/Results
         [HttpPost("Results")]
-        public async Task<ActionResult<Resultss>> PostResult(Resultss result)
+        public async Task<ActionResult<ResultsResponse>> CreateResult(ResultsResponse resultResponse, string role)
         {
+            var organiser = await _context.Organizers.FindAsync(resultResponse.ParticipantId);
+            if (organiser == null)
+            {
+                return NotFound("Organizer not found.");
+            }
+            if (role != "Organizer")
+            {
+                return Forbid("Only organizers can create results.");
+            }
+            var result = new Resultss
+            {
+                EventId = resultResponse.EventId,
+                ParticipantId = resultResponse.ParticipantId,
+                Time = resultResponse.Time,
+                Distance = resultResponse.Distance,
+                CategoryId = resultResponse.CategoryId
+            };
             _context.Resultss.Add(result);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetResult", new { id = result.Id }, result);
+            resultResponse.Id = result.Id;
+            return CreatedAtAction(nameof(GetResult), new { id = result.Id }, resultResponse);
         }
 
-        // PUT: api/RaceDay/Results/5
-        [HttpPut("Results/{id}")]
-        public async Task<IActionResult> PutResult(int id, Resultss result)
+        //DELETE: api/RaceDay/Results/5
+        [HttpDelete("Results/{id}")]
+        public async Task<IActionResult> DeleteResult(int id, int organizerId)
         {
-            if (id != result.Id)
+            var results = await _context.Resultss.FindAsync(id);
+            var organiser = await _context.Organizers.FindAsync(results.ParticipantId);
+            if (organiser == null)
+            {
+                return NotFound("Organizer not found.");
+            }
+
+            var resultss = await _context.Resultss.FindAsync(id);
+            if (resultss == null)
+            {
+                return NotFound();
+            }
+
+            _context.Resultss.Remove(resultss);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // Helper method to check if a result exists
+        private bool ResultExists(int id)
+        {
+            return _context.Resultss.Any(r => r.Id == id);
+        }
+
+        //Event Enrollments
+        [HttpGet("EventEnrollments")]
+        public async Task<ActionResult<IEnumerable<EventEnrollments>>> GetEventEnrollments()
+        {
+            return await _context.EventEnrollments.ToListAsync();
+        }
+
+        // GET: api/RaceDay/EventEnrollments/5
+        [HttpGet("EventEnrollments/{id}")]
+        public async Task<ActionResult<EventEnrollments>> GetEventEnrollment(int id)
+        {
+            var eventEnrollment = await _context.EventEnrollments.FindAsync(id);
+            if (eventEnrollment == null)
+            {
+                return NotFound();
+            }
+            return eventEnrollment;
+        }
+
+        // POST: api/RaceDay/EventEnrollments
+        [HttpPost("EventEnrollments")]
+        public async Task<ActionResult<EventEnrollments>> CreateEventEnrollment(EventEnrollments eventEnrollment)
+        {
+            _context.EventEnrollments.Add(eventEnrollment);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetEventEnrollment), new { id = eventEnrollment.Id }, eventEnrollment);
+        }
+
+        // PUT: api/RaceDay/EventEnrollments/5
+        [HttpPut("EventEnrollments/{id}")]
+        public async Task<IActionResult> UpdateEventEnrollment(int id, EventEnrollments eventEnrollment)
+        {
+            if (id != eventEnrollment.Id)
             {
                 return BadRequest();
             }
-            _context.Entry(result).State = EntityState.Modified;
+            _context.Entry(eventEnrollment).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ResultExists(id))
+                if (!EventEnrollmentExists(id))
                 {
                     return NotFound();
                 }
@@ -481,78 +653,24 @@ namespace RaceDay_API.Controllers
             return NoContent();
         }
 
-        private bool ResultExists(int id)
+        // Helper method to check if an event enrollment exists
+        private bool EventEnrollmentExists(int id)
         {
-            return _context.Resultss.Any(e => e.Id == id);
+            return _context.EventEnrollments.Any(e => e.Id == id);
         }
 
-        // DELETE: api/RaceDay/Results/5
-        [HttpDelete("Results/{id}")]
-        public async Task<IActionResult> DeleteResult(int id)
+        // DELETE: api/RaceDay/EventEnrollments/5
+        [HttpDelete("EventEnrollments/{id}")]
+        public async Task<IActionResult> DeleteEventEnrollment(int id)
         {
-            var result = await _context.Resultss.FindAsync(id);
-            if (result == null)
+            var eventEnrollment = await _context.EventEnrollments.FindAsync(id);
+            if (eventEnrollment == null)
             {
                 return NotFound();
             }
-            _context.Resultss.Remove(result);
+            _context.EventEnrollments.Remove(eventEnrollment);
             await _context.SaveChangesAsync();
             return NoContent();
-        }
-
-        // GET: api/RaceDay/Results/event/5
-        [HttpGet("Results/event/{eventId}")]
-        public async Task<ActionResult<IEnumerable<Resultss>>> GetResultsByEvent(int eventId)
-        {
-            var results = await _context.Resultss
-                .Where(r => r.EventId == eventId)
-                .ToListAsync();
-            if (results == null || results.Count == 0)
-            {
-                return NotFound();
-            }
-            return Ok(results);
-        }
-
-        // GET: api/RaceDay/Results/participant/5
-        [HttpGet("Results/participant/{participantId}")]
-        public async Task<ActionResult<IEnumerable<Resultss>>> GetResultsByParticipant(int participantId)
-        {
-            var results = await _context.Resultss
-                .Where(r => r.ParticipantId == participantId)
-                .ToListAsync();
-            if (results == null || results.Count == 0)
-            {
-                return NotFound();
-            }
-            return Ok(results);
-        }
-
-        // GET: api/RaceDay/Results/event/5/participant/5
-        [HttpGet("Results/event/{eventId}/participant/{participantId}")]
-        public async Task<ActionResult<Resultss>> GetResultByEventAndParticipant(int eventId, int participantId)
-        {
-            var result = await _context.Resultss
-                .FirstOrDefaultAsync(r => r.EventId == eventId && r.ParticipantId == participantId);
-            if (result == null)
-            {
-                return NotFound();
-            }
-            return Ok(result);
-        }
-
-        // GET: api/RaceDay/Results/event/5/category/Open
-        [HttpGet("Results/event/{eventId}/category/{category}")]
-        public async Task<ActionResult<IEnumerable<Resultss>>> GetResultsByEventAndCategory(int eventId, string category)
-        {
-            var results = await _context.Resultss
-                .Where(r => r.EventId == eventId && r.Category == category)
-                .ToListAsync();
-            if (results == null || results.Count == 0)
-            {
-                return NotFound();
-            }
-            return Ok(results);
         }
 
     }
