@@ -639,6 +639,27 @@
   },
   {
     "ContainingType": "RaceDay_API.Controllers.RaceDayController",
+    "Method": "UpdateResult",
+    "RelativePath": "api/RaceDay/Results/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "resultResponse",
+        "Type": "RaceDay_API.Models.ResultsResponse",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "RaceDay_API.Controllers.RaceDayController",
     "Method": "DeleteResult",
     "RelativePath": "api/RaceDay/Results/{id}",
     "HttpMethod": "DELETE",

@@ -5,8 +5,12 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using RaceDay_API.Data;
 using RaceDay_API.Models;
+using System.Security.Claims;
 
 namespace RaceDay_API.Controllers
 {
@@ -138,11 +142,35 @@ namespace RaceDay_API.Controllers
                 CategoryId = "1"
             }
         };
+        private readonly IConfiguration _configuration;
+        private readonly UsersDbContext dbContext;
+
+        //method for the token 
+        private string GenerateJwtToken(string email, string role, int userId)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, role),
+                new Claim("userId", userId.ToString())
+            };
+            var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(1),
+                signingCredentials: creds
+            );
+            return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+        }
 
         // Constructor
-        public RaceDayController(UsersDbContext context)
+        public RaceDayController(UsersDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // GET: api/RaceDay/participants
@@ -227,18 +255,26 @@ namespace RaceDay_API.Controllers
         public async Task<ActionResult<Participants>> LoginParticipant([FromBody] DtoParticipantsLogin loginRequest)
         {
             var participant = await _context.Participants
-                .FirstOrDefaultAsync(p => p.Email == loginRequest.Email && p.PasswordHash == loginRequest.PasswordHash);
+                .FirstOrDefaultAsync(p => p.Email == loginRequest.Email);
             if (participant == null)
             {
                 return Unauthorized("Invalid email or password.");
             }
 
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.PasswordHash, participant.PasswordHash);
-            if (!isPasswordValid)
-            {
-                return Unauthorized("Invalid email or password.");
-            }
-            return Ok(participant);
+            bool isPasswordvalid = BCrypt.Net.BCrypt.Verify(loginRequest.PasswordHash, participant.PasswordHash);
+            
+
+            var token = GenerateJwtToken(participant.Email, participant.Role, participant.Id);
+
+            return Ok(new
+            { 
+                Id = participant.Id,
+                Name = participant.Name,
+                Surname = participant.Surname,
+                Age = participant.Age,
+                Email = participant.Email,
+                Username = participant.Username
+            });
         }
 
         // GET: api/RaceDay/Organizers
@@ -326,6 +362,7 @@ namespace RaceDay_API.Controllers
             {
                 return Unauthorized("Invalid email or password.");
             }
+            var token = GenerateJwtToken(organizer.Email, organizer.Role, organizer.Id);
             bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.PasswordHash, organizer.PasswordHash);
             if (!isPasswordValid)
             {
@@ -522,6 +559,7 @@ namespace RaceDay_API.Controllers
         }
 
         //GET: api/RaceDay/Results/event/5
+        [Authorize]
         [HttpGet("Results/event/{eventId}")]
         public async Task<ActionResult<IEnumerable<ResultsResponse>>> GetResultsByEvent(int eventId)
         {
@@ -545,6 +583,7 @@ namespace RaceDay_API.Controllers
         }
 
         // POST: api/RaceDay/Results
+        [Authorize(Roles = "Organizer")]
         [HttpPost("Results")]
         public async Task<ActionResult<ResultsResponse>> CreateResult(ResultsResponse resultResponse, string role)
         {
@@ -571,7 +610,36 @@ namespace RaceDay_API.Controllers
             return CreatedAtAction(nameof(GetResult), new { id = result.Id }, resultResponse);
         }
 
+        // PUT: api/RaceDay/Results/5
+        [Authorize(Roles = "Organizer")]
+        [HttpPut("Results/{id}")]
+        public async Task<IActionResult> UpdateResult(int id, ResultsResponse resultResponse)
+        {
+            if (id != resultResponse.Id)
+            {
+                return BadRequest();
+            }
+
+            var result = await _context.Resultss.FindAsync(id);
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            result.EventId = resultResponse.EventId;
+            result.ParticipantId = resultResponse.ParticipantId;
+            result.Time = resultResponse.Time;
+            result.Distance = resultResponse.Distance;
+            result.CategoryId = resultResponse.CategoryId;
+
+            _context.Entry(result).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
         //DELETE: api/RaceDay/Results/5
+        [Authorize(Roles = "Organizer")]
         [HttpDelete("Results/{id}")]
         public async Task<IActionResult> DeleteResult(int id, int organizerId)
         {
@@ -600,6 +668,7 @@ namespace RaceDay_API.Controllers
         }
 
         //Event Enrollments
+        [Authorize(Roles = "Organizer")]
         [HttpGet("EventEnrollments")]
         public async Task<ActionResult<IEnumerable<EventEnrollments>>> GetEventEnrollments()
         {
